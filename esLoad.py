@@ -17,9 +17,18 @@ import numpy as np
 import csv
 from nltk import sent_tokenize
 from elasticsearch import Elasticsearch
-es = Elasticsearch(['localhost:9200'])
+import logging
 
-regex = re.compile(r'[\n\r\t]')
+
+# detailed info logging
+logging.basicConfig(filename='esloadlog.json',
+                    filemode='w',
+                    level = logging.DEBUG,
+                    format="%(levelname) -10s %(asctime)s %(module)s:%(lineno)s %(funcName)s %(message)s",)
+
+f = open("log.json", 'w')
+sys.stdout = f
+es = Elasticsearch(['localhost:9200'])
 
 def getFileList():
     """
@@ -63,34 +72,43 @@ def es_load(directory,row, index="latin",doctype="library"):
     for esindex, esrow in enumerate(data):
         doc = {"author": author, "filename": filename, "title": title, "sentence_id": esindex+1,
             "sentence": esrow, "url": url}
-        res = es.index(index=index, doc_type=doctype, body=doc, request_timeout=60)
-        print(filename, esindex+1, " inserted: ",res['created'])
+        res = es.index(index=index, doc_type=doctype, body=doc, request_timeout=180)
+    print("filename:", filename.encode('utf-8'), "number of sentences: ",esindex+1, " inserted: ",res['created'])
 
 
 if __name__ == '__main__':
+    success = 0
+    fail = 0
+    failedList = []
     inputfile = sys.argv[1]
-
+    #inputfile = "/Users/Andrew/github/esload/latin_text_latin_library/staging_data-1-2017-07-13.csv"
     sinput = pd.read_csv(inputfile, encoding="ISO-8859-1")  # Read meta from input file
-    Filelist = getFileList() # returns the list which has directories for all files
+    #Filelist = getFileList() # returns the list which has directories for all files
 
-    for index, row in sinput.iterrows(): # iterate over the input fil
+    for index, row in sinput.iterrows(): # iterate over the input file
         author = row['author'].lower()
         filename = row['filename'] # get the filename in each
         url = row['url']
+        fullpath=row["filename"]
         if (len(url.split('/')) >4):
-            temp = url.split('/')[-2]+'/'+url.split('/')[-1]
-            temp = temp.replace(".html",".txt")
-            temp = temp.replace(".shtml",".txt")
-            dir ='./latin_text_latin_library/' + temp
-        else:
-            temp = url.split('/')[-1]
-            temp = temp.replace(".html", ".txt")
-            temp = temp.replace(".shtml", ".txt")
-            dir ='./latin_text_latin_library/' + temp
+            fullpath = "{0}/{1}".format(url.split('/')[-2],filename)
 
-        indices = [i for i, x in enumerate(Filelist) if temp in x]
-
+        print("File{0}".format(index+1))
         try:
-            es_load(Filelist[indices[0]], row)
-        except:
-            print("ERROR:","filename:", filename)
+            if not os.path.exists(fullpath):
+                print("ERROR: FILE NOT FOUND", "filename:", fullpath)
+                fail+= 1
+                failedList.append(fullpath)
+            else:
+                es_load(fullpath, row)
+                success += 1
+        except Exception as e:
+            logging.exception("message")
+
+print("-----------------------------------------------------------------")
+print("Number of files inserted successfully:", success)
+print("Number of files failed to insert:", fail)
+print("\n")
+for p in failedList: print p
+print("-----------------------------------------------------------------")
+f.close()
