@@ -12,7 +12,6 @@ from datetime import datetime
 import sys
 import csv
 import math
-import unicodecsv as csv
 import numpy as np
 import csv
 from nltk import sent_tokenize
@@ -105,10 +104,10 @@ if __name__ == '__main__':
         except Exception as e:
             logging.exception("message")
 
-print("-----------------------------------------------------------------")
-print("Number of files inserted successfully:", success)
-print("Number of files failed to insert:", fail)
-print("\n")
-for p in failedList: print p
-print("-----------------------------------------------------------------")
-f.close()
+    print("-----------------------------------------------------------------")
+    print("Number of files inserted successfully:", success)
+    print("Number of files failed to insert:", fail)
+    print("\n")
+    for p in failedList: print p
+    print("-----------------------------------------------------------------")
+    f.close()
