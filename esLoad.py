@@ -12,12 +12,14 @@ from datetime import datetime
 import sys
 import csv
 import math
+import unicodecsv as csv
 import numpy as np
 import csv
 from nltk import sent_tokenize
 from elasticsearch import Elasticsearch
 import logging
 
+regex = re.compile(r'[\n\r\t]')
 
 # detailed info logging
 logging.basicConfig(filename='esloadlog.json',
@@ -52,6 +54,7 @@ def tokenizeSentences(data):
     # Tokenize the  raw latin texts. Parsing by period.
     :return: sentence list
     """
+    data = regex.sub(' ', data)
     sentences = sent_tokenize(data)  # parse sentences by period
     cleaned_sentences = [x for x in sentences if x != "."] # if the sentence has only '.', remove it from the list
     # TO-DOS: # Clean the text some more
@@ -67,10 +70,12 @@ def es_load(directory,row, index="latin",doctype="library"):
     author = row['author']
     title = row['title']
     url = row['url']
+    era = row['Era']
+    familiar_name = row['FamiliarName']
     data = readTexts(directory)
     for esindex, esrow in enumerate(data):
         doc = {"author": author, "filename": filename, "title": title, "sentence_id": esindex+1,
-            "sentence": esrow, "url": url}
+            "sentence": esrow, "url": url, "era": era, "familiar_name": familiar_name }
         res = es.index(index=index, doc_type=doctype, body=doc, request_timeout=180)
     print("filename:", filename.encode('utf-8'), "number of sentences: ",esindex+1, " inserted: ",res['created'])
 
@@ -104,10 +109,10 @@ if __name__ == '__main__':
         except Exception as e:
             logging.exception("message")
 
-    print("-----------------------------------------------------------------")
-    print("Number of files inserted successfully:", success)
-    print("Number of files failed to insert:", fail)
-    print("\n")
-    for p in failedList: print p
-    print("-----------------------------------------------------------------")
-    f.close()
+print("-----------------------------------------------------------------")
+print("Number of files inserted successfully:", success)
+print("Number of files failed to insert:", fail)
+print("\n")
+for p in failedList: print(p)
+print("-----------------------------------------------------------------")
+f.close()
