@@ -56,7 +56,10 @@ def tokenizeSentences(data):
     """
     data = regex.sub(' ', data)
     sentences = sent_tokenize(data)  # parse sentences by period
-    cleaned_sentences = [x for x in sentences if x != "."] # if the sentence has only '.', remove it from the list
+    cleaned_sentences = [x for x in sentences if x != "." and x.split(' ')[0].istitle() and x.split(' ')[
+        1].isdigit() == False]  # if the sentence has only '.', remove it from the list # if the sentence has only '.', remove it from the list
+
+
     # TO-DOS: # Clean the text some more
     return cleaned_sentences #cleaned_sentences # return the list of sentences
 
