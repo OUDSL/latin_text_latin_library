@@ -20,6 +20,7 @@ from elasticsearch import Elasticsearch
 import logging
 
 regex = re.compile(r'[\n\r\t]')
+regex2 = re.compile(r'[].\s*[0-9]\s*.[]\s*[0-9]\s*\d')  ## Cleans the numbers in the bible files
 
 # detailed info logging
 logging.basicConfig(filename='esloadlog.json',
@@ -55,9 +56,10 @@ def tokenizeSentences(data):
     :return: sentence list
     """
     data = regex.sub(' ', data)
-    sentences = sent_tokenize(data)  # parse sentences by period
-    cleaned_sentences = [x for x in sentences if x != "." and x.split(' ')[0].istitle() and x.split(' ')[
-        1].isdigit() == False]  # if the sentence has only '.', remove it from the list # if the sentence has only '.', remove it from the list
+    clean_data = regex2.sub(' ',data)
+    sentences = sent_tokenize(clean_data)  # parse sentences by period
+    cleaned_sentences = [x for x in text if x != "."]
+    # if the sentence has only '.', remove it from the list # if the sentence has only '.', remove it from the list
 
 
     # TO-DOS: # Clean the text some more
